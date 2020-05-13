@@ -37,18 +37,26 @@ namespace mdb_sqlite.NET_Sample
     {
         static void Main(string[] args)
         {
-            try
+            if (args.Length == 2)
             {
-                // Initialize AccessExporter
-                AccessExporter exporter = new AccessExporter(@"Path\To\Your\Accesss\test.mdb");
-                exporter.export(@"Path\To\Create\SQLiteDB\new_db.sqlite");
-                // Dispose after use.
-                exporter.Dispose();
+                try
+                {
+                    // Initialize AccessExporter
+                    AccessExporter exporter = new AccessExporter(args[0]);
+                    exporter.export(args[1]);
+                    // Dispose after use.
+                    exporter.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine((ex.InnerException ?? ex).Message);
+                }
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine((ex.InnerException ?? ex).Message);
+                Console.WriteLine("Usage:\n\t" + System.AppDomain.CurrentDomain.FriendlyName + " Source.mdb Target.sqlite");
             }
+
         }
     }
 }
