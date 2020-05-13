@@ -34,6 +34,7 @@ using System.Data.SQLite;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -363,15 +364,7 @@ namespace mdb_sqlite.NET_Sample
                                 case "BINARY":
                                 case "LONGBINARY":
                                 case "OLE":
-                                    using (var ms = new MemoryStream())
-                                    {
-                                        using (var writer = new BinaryWriter(ms))
-                                        {
-                                            writer.Write((byte[])value);
-                                            ms.Seek(0, SeekOrigin.Begin);
-                                            cmd.Parameters.AddWithValue("@param" + (i + 1), ms.ToArray());
-                                        }
-                                    }
+                                    cmd.Parameters.AddWithValue("@param" + (i + 1), (byte[])value);
                                     break;
                                 case "FLOAT":
                                     cmd.Parameters.AddWithValue("@param" + (i + 1), (Double)(float)value);
