@@ -363,12 +363,14 @@ namespace mdb_sqlite.NET_Sample
                                 case "BINARY":
                                 case "LONGBINARY":
                                 case "OLE":
-                                    var formatter = new BinaryFormatter();
                                     using (var ms = new MemoryStream())
                                     {
-                                        formatter.Serialize(ms, value);
-                                        ms.Seek(0, SeekOrigin.Begin);
-                                        cmd.Parameters.AddWithValue("@param" + (i + 1), ms.ToArray());
+                                        using (var writer = new BinaryWriter(ms))
+                                        {
+                                            writer.Write((byte[])value);
+                                            ms.Seek(0, SeekOrigin.Begin);
+                                            cmd.Parameters.AddWithValue("@param" + (i + 1), ms.ToArray());
+                                        }
                                     }
                                     break;
                                 case "FLOAT":
