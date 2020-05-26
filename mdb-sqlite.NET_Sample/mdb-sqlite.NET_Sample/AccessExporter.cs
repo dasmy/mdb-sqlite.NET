@@ -117,14 +117,23 @@ namespace mdb_sqlite.NET_Sample
                     dt_Indexes = oleConn.GetSchema("Indexes").Select("TABLE_NAME = '" + tblName + "'").CopyToDataTable();
                     foreach (DataRow row in dt_Indexes.Rows)
                     {
-                        if (!_Indexes.Any(x => x.Name == row["INDEX_NAME"].ToString()))
+                        var index_name = row["INDEX_NAME"].ToString();
+                        var column_name = row["COLUMN_NAME"].ToString();
+
+                        if (!_Indexes.Any(x => x.Name == index_name))
                         {   // not exists
-                            _Indexes.Add(new Index { TableName = row["TABLE_NAME"].ToString(), Name = row["INDEX_NAME"].ToString(), isPrimaryKey = (bool)row["PRIMARY_KEY"], isUnique = (bool)row["UNIQUE"], IndexingFields = new List<string> { row["COLUMN_NAME"].ToString() } });
+                            _Indexes.Add(new Index { TableName = row["TABLE_NAME"].ToString(), Name = index_name, isUnique = (bool)row["UNIQUE"], IndexingFields = new List<string> { column_name } });
                         }
                         else
                         {   // exists
-                            _Indexes.Single(x => x.Name == row["INDEX_NAME"].ToString()).IndexingFields.Add(row["COLUMN_NAME"].ToString());
+                            _Indexes.Single(x => x.Name == index_name).IndexingFields.Add(column_name);
                         }
+
+                        if ((bool)row["PRIMARY_KEY"])
+                            _Columns.Single(x => x.Name == column_name).isPrimaryKey = true;
+
+                        if ((bool)row["AUTO_UPDATE"])
+                            _Columns.Single(x => x.Name == column_name).isAutoUpdate = true;
                     }
                 }
             }
@@ -223,6 +232,17 @@ namespace mdb_sqlite.NET_Sample
 
                     default:
                         throw new ArgumentException("Unhandled MS Access datatype:  " + column.DataType);
+                }
+
+                if (column.isPrimaryKey)
+                    sb.Append(" PRIMARY KEY");
+
+                if (column.isAutoUpdate)
+                {
+                    if (!column.isPrimaryKey)
+                        throw new ArgumentException("Column is AutoUpdate but not Primary Key - this is not supported by SQLite:  " + column.Name);
+
+                    sb.Append(" AUTOINCREMENT");
                 }
 
                 if (i + 1 < columnCount)
@@ -578,13 +598,14 @@ namespace mdb_sqlite.NET_Sample
     {
         public string Name { get; set; }
         public string DataType { get; set; }
+        public bool isPrimaryKey { get; set; }
+        public bool isAutoUpdate { get; set; }
     }
 
     public class Index 
     {
         public string TableName { get; set; }
         public string Name { get; set; }
-        public bool isPrimaryKey { get; set; }
         public bool isUnique { get; set; }
         public List<string> IndexingFields { get; set; }
     }
